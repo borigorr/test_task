@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+    php:
+      build:
+        context: .
+        dockerfile: ./docker/php/Dockerfile
+        args:
+          user: '${UID}'
+          uid: '${GID}'
+      volumes:
+        - './:/var/www/'
+      depends_on:
+        - database
+
+    database:
+      image: 'postgres:15'
+      environment:
+        POSTGRES_PASSWORD: '${DB_PASSWORD}'
+        POSTGRES_DB: '${DB_DATABASE}'
+        POSTGRES_USER: '${DB_USERNAME}'
+        TZ: 'Europe/Moscow'
+      volumes:
+        - 'panels-db:/var/lib/postgresql/data:rw'
+      ports:
+        - "5432:5432"
+
+    webserver:
+        build:
+          context: .
+          dockerfile: ./docker/nginx/Dockerfile
+          args:
+            user: '${UID}'
+            uid: '${GID}'
+        ports:
+            - "80:80"
+        volumes:
+            - ./:/var/www
+    node:
+        build:
+            context: .
+            dockerfile: ./docker/node/Dockerfile
+            args:
+                user: '${UID}'
+                uid: '${GID}'
+        volumes:
+            - './:/var/www/'
+        ports:
+            - "5173:5173"
+volumes:
+  panels-db:
+    driver: local
